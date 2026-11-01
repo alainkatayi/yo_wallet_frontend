@@ -1,0 +1,151 @@
+<app-auth-layout>
+  <div class="mb-6">
+    <h1 class="text-2xl font-semibold tracking-tight text-ink">Créer un compte</h1>
+    <p class="mt-1 text-sm text-muted">Quelques informations pour ouvrir votre espace Yo Wallet.</p>
+  </div>
+
+  <form class="flex flex-col gap-4" [formGroup]="form" novalidate (ngSubmit)="submit()">
+    <div class="grid gap-4 sm:grid-cols-2">
+      <app-form-field label="Prénom" inputId="firstName" [error]="firstNameError()">
+        <input
+          id="firstName"
+          type="text"
+          name="given-name"
+          autocomplete="given-name"
+          maxlength="100"
+          [class]="controlPadClass"
+          [formControl]="form.controls.firstName"
+          [attr.aria-invalid]="firstNameError() ? 'true' : null"
+          [attr.aria-describedby]="firstNameError() ? 'firstName-error' : null"
+        />
+      </app-form-field>
+      <app-form-field label="Nom" inputId="lastName" [error]="lastNameError()">
+        <input
+          id="lastName"
+          type="text"
+          name="family-name"
+          autocomplete="family-name"
+          maxlength="100"
+          [class]="controlPadClass"
+          [formControl]="form.controls.lastName"
+          [attr.aria-invalid]="lastNameError() ? 'true' : null"
+          [attr.aria-describedby]="lastNameError() ? 'lastName-error' : null"
+        />
+      </app-form-field>
+    </div>
+
+    <app-form-field label="E-mail" inputId="email" [error]="emailError()">
+      <div class="relative">
+        <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-muted">
+          <app-icon name="mail" [size]="18" />
+        </span>
+        <input
+          id="email"
+          type="email"
+          name="email"
+          autocomplete="email"
+          placeholder="nom@exemple.com"
+          [class]="controlIconClass"
+          [formControl]="form.controls.email"
+          [attr.aria-invalid]="emailError() ? 'true' : null"
+          [attr.aria-describedby]="emailError() ? 'email-error' : null"
+        />
+      </div>
+    </app-form-field>
+
+    <app-form-field
+      label="Téléphone"
+      inputId="phone"
+      [error]="phoneError()"
+      hint="Format international, par exemple +243 812 345 678."
+    >
+      <div class="relative">
+        <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-muted">
+          <app-icon name="phone" [size]="18" />
+        </span>
+        <input
+          id="phone"
+          type="tel"
+          name="phone"
+          inputmode="tel"
+          autocomplete="tel"
+          placeholder="+243 812 345 678"
+          [class]="controlIconClass"
+          [formControl]="form.controls.phone"
+          [attr.aria-invalid]="phoneError() ? 'true' : null"
+          [attr.aria-describedby]="phoneError() ? 'phone-error' : 'phone-hint'"
+        />
+      </div>
+    </app-form-field>
+
+    <app-form-field
+      label="Mot de passe"
+      inputId="password"
+      [error]="passwordError()"
+      hint="8 à 64 caractères, avec au moins une lettre et un chiffre."
+    >
+      <div class="relative">
+        <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-muted">
+          <app-icon name="lock" [size]="18" />
+        </span>
+        <input
+          id="password"
+          [type]="showPassword() ? 'text' : 'password'"
+          name="password"
+          autocomplete="new-password"
+          [class]="controlActionClass"
+          [formControl]="form.controls.password"
+          [attr.aria-invalid]="passwordError() ? 'true' : null"
+          [attr.aria-describedby]="passwordError() ? 'password-error' : 'password-hint'"
+        />
+        <button
+          type="button"
+          class="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-muted"
+          (click)="showPassword.set(!showPassword())"
+          [attr.aria-label]="showPassword() ? 'Masquer le mot de passe' : 'Afficher le mot de passe'"
+        >
+          <app-icon [name]="showPassword() ? 'eye-off' : 'eye'" [size]="18" />
+        </button>
+      </div>
+    </app-form-field>
+
+    <app-form-field label="Confirmation" inputId="confirmPassword" [error]="confirmError()">
+      <div class="relative">
+        <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-muted">
+          <app-icon name="lock" [size]="18" />
+        </span>
+        <input
+          id="confirmPassword"
+          [type]="showConfirm() ? 'text' : 'password'"
+          name="confirmPassword"
+          autocomplete="new-password"
+          [class]="controlActionClass"
+          [formControl]="form.controls.confirmPassword"
+          [attr.aria-invalid]="confirmError() ? 'true' : null"
+          [attr.aria-describedby]="confirmError() ? 'confirmPassword-error' : null"
+        />
+        <button
+          type="button"
+          class="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-muted"
+          (click)="showConfirm.set(!showConfirm())"
+          [attr.aria-label]="showConfirm() ? 'Masquer la confirmation' : 'Afficher la confirmation'"
+        >
+          <app-icon [name]="showConfirm() ? 'eye-off' : 'eye'" [size]="18" />
+        </button>
+      </div>
+    </app-form-field>
+
+    @if (formError()) {
+      <p role="alert" class="rounded-control bg-danger-soft px-3 py-2 text-sm text-danger-ink">
+        {{ formError() }}
+      </p>
+    }
+
+    <app-button type="submit" [full]="true" [loading]="submitting()">Créer mon compte</app-button>
+  </form>
+
+  <p class="mt-6 text-center text-sm text-muted">
+    Déjà un compte ?
+    <a routerLink="/connexion" class="font-semibold text-tertiary-ink">Se connecter</a>
+  </p>
+</app-auth-layout>

@@ -1,0 +1,29 @@
+<div class="flex min-h-dvh bg-neutral">
+  <div class="flex min-h-dvh w-full">
+    @if (layout.menuOpen()) {
+      <button
+        type="button"
+        class="fixed inset-0 z-30 bg-primary/50 lg:hidden"
+        aria-label="Fermer le menu"
+        (click)="layout.closeMenu()"
+      ></button>
+    }
+    <app-sidebar />
+    <div class="flex min-w-0 flex-1 flex-col">
+      <app-topbar />
+      <main class="flex-1 px-4 py-5 sm:px-6 lg:px-8 lg:py-8">
+        <div class="mx-auto w-full max-w-6xl">
+          <router-outlet />
+        </div>
+      </main>
+    </div>
+  </div>
+</div>
+
+<app-modal title="Se déconnecter ?" [open]="layout.logoutOpen()" (closed)="cancelLogout()">
+  <p>Vous devrez saisir à nouveau vos identifiants pour revenir sur votre compte.</p>
+  <app-button modalActions variant="outlined" size="sm" (click)="cancelLogout()">Annuler</app-button>
+  <app-button modalActions variant="danger" size="sm" [loading]="loggingOut()" (click)="logout()">
+    Se déconnecter
+  </app-button>
+</app-modal>

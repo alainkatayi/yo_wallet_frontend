@@ -1,1 +1,57 @@
-/* You can add global styles to this file, and also import other style files */
+@import 'tailwindcss';
+@config '../tailwind.config.js';
+
+@theme {
+  --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+
+  --color-primary: #0f172a;
+  --color-primary-foreground: #f8fafc;
+  --color-primary-muted: #94a3b8;
+  --color-secondary: #1e293b;
+  --color-secondary-foreground: #e2e8f0;
+  --color-tertiary: #10b981;
+  --color-tertiary-foreground: #ffffff;
+  --color-tertiary-soft: #d1fae5;
+  --color-tertiary-ink: #047857;
+  --color-neutral: #f8fafc;
+  --color-surface: #ffffff;
+  --color-ink: #0f172a;
+  --color-muted: #64748b;
+  --color-line: #e2e8f0;
+  --color-canvas: #070b14;
+  --color-nav: #020617;
+  --color-frame: #6d5bd0;
+  --color-danger: #e11d48;
+  --color-danger-soft: #ffe4e6;
+  --color-danger-ink: #be123c;
+  --color-warning: #d97706;
+  --color-warning-soft: #fef3c7;
+  --color-warning-ink: #92400e;
+
+  --radius-control: 0.875rem;
+  --radius-card: 1.25rem;
+  --radius-shell: 1.75rem;
+
+  --shadow-card: 0 1px 2px rgb(15 23 42 / 0.04), 0 12px 32px rgb(15 23 42 / 0.06);
+  --shadow-shell: 0 24px 80px rgb(0 0 0 / 0.45);
+}
+
+@utility canvas-dots {
+  background-color: var(--color-canvas);
+  background-image: radial-gradient(
+    color-mix(in srgb, var(--color-neutral) 16%, transparent) 1px,
+    transparent 1px
+  );
+  background-size: 18px 18px;
+}
+
+@layer base {
+  html {
+    @apply h-full font-sans antialiased;
+    color-scheme: light;
+  }
+
+  body {
+    @apply m-0 min-h-full bg-neutral text-ink;
+  }
+}
