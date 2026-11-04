@@ -1,0 +1,124 @@
+<div class="flex flex-wrap items-center justify-center gap-3">
+  @if (mode() === 'all') {
+    <app-button type="button" variant="outlined" (click)="open('WITHDRAW')">
+      <app-icon name="arrow-up" [size]="18" />
+      Retirer
+    </app-button>
+  }
+  <app-button type="button" variant="primary" (click)="open('TOPUP')">
+    <app-icon name="arrow-down" [size]="18" />
+    Recharger
+  </app-button>
+</div>
+
+<app-modal [open]="modalOpen()" [title]="title()" (closed)="close()">
+  @if (step() === 'form') {
+    <form class="flex flex-col gap-4 text-ink" [formGroup]="form" novalidate (ngSubmit)="continue()">
+      <app-form-field
+        label="Montant"
+        inputId="operationAmount"
+        [error]="amountError()"
+        [hint]="'Supérieur à 0, en ' + currency() + '. Deux décimales au plus.'"
+      >
+        <input
+          id="operationAmount"
+          type="text"
+          name="amount"
+          inputmode="decimal"
+          autocomplete="off"
+          placeholder="1500.00"
+          [class]="controlPadClass"
+          [formControl]="form.controls.amount"
+          [readOnly]="submitting()"
+          [attr.aria-invalid]="amountError() ? 'true' : null"
+          [attr.aria-describedby]="amountError() ? 'operationAmount-error' : 'operationAmount-hint'"
+        />
+      </app-form-field>
+      @if (formError(); as message) {
+        <p role="alert" class="rounded-control bg-danger-soft px-3 py-2 text-sm text-danger-ink">{{ message }}</p>
+      }
+      <app-button type="submit" [full]="true">Continuer</app-button>
+    </form>
+  } @else if (step() === 'password') {
+    <form class="flex flex-col gap-4 text-ink" [formGroup]="passwordForm" novalidate (ngSubmit)="confirm()">
+      <p>
+        Confirmez cette {{ operationWord() }} de
+        <span class="font-semibold">{{ preparedAmount() }} {{ currency() }}</span>
+        avec le mot de passe du compte connecté.
+      </p>
+      <app-form-field
+        label="Mot de passe"
+        inputId="operationPassword"
+        [error]="passwordError()"
+        hint="Celui de votre session Yo Wallet."
+      >
+        <div class="relative">
+          <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-muted">
+            <app-icon name="lock" [size]="18" />
+          </span>
+          <input
+            id="operationPassword"
+            [type]="showPassword() ? 'text' : 'password'"
+            name="current-password"
+            autocomplete="current-password"
+            [class]="controlActionClass"
+            [formControl]="passwordForm.controls.password"
+            [readOnly]="submitting()"
+            [attr.aria-invalid]="passwordError() ? 'true' : null"
+            [attr.aria-describedby]="passwordError() ? 'operationPassword-error' : 'operationPassword-hint'"
+          />
+          <button
+            type="button"
+            class="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-muted"
+            (click)="showPassword.set(!showPassword())"
+            [attr.aria-label]="showPassword() ? 'Masquer le mot de passe' : 'Afficher le mot de passe'"
+          >
+            <app-icon [name]="showPassword() ? 'eye-off' : 'eye'" [size]="18" />
+          </button>
+        </div>
+      </app-form-field>
+      @if (formError(); as message) {
+        <p role="alert" class="rounded-control bg-danger-soft px-3 py-2 text-sm text-danger-ink">{{ message }}</p>
+      }
+      <app-button type="submit" [full]="true" [loading]="submitting()">{{ actionLabel() }}</app-button>
+      <app-button type="button" variant="ghost" [full]="true" [disabled]="submitting()" (click)="backToAmount()">
+        Modifier le montant
+      </app-button>
+    </form>
+  } @else if (step() === 'pending') {
+    <div class="flex flex-col items-start gap-3 text-ink">
+      <p class="font-semibold">Opération en cours.</p>
+      @if (outcome(); as current) {
+        <p>{{ typeLabel() }} de {{ current.amount }} {{ currency() }}.</p>
+        <p class="text-muted">Référence {{ current.reference }}</p>
+      }
+      @if (polling()) {
+        <app-spinner [size]="22" label="Opération en cours" />
+      }
+      @if (timedOut()) {
+        <p>Elle peut le rester. Aucune nouvelle demande n’est envoyée.</p>
+      }
+      @if (formError(); as message) {
+        <p role="alert" class="w-full rounded-control bg-danger-soft px-3 py-2 text-sm text-danger-ink">{{ message }}</p>
+      }
+    </div>
+  } @else if (outcome(); as current) {
+    <div class="flex flex-col gap-2 text-ink">
+      <p class="font-semibold">{{ resultText() }}</p>
+      <p>{{ typeLabel() }} de {{ current.amount }} {{ currency() }}.</p>
+      <p class="text-muted">Frais {{ current.fee }}</p>
+      @if (current.bankAccount) {
+        <p class="text-muted">{{ current.bankAccount }}</p>
+      }
+      <p class="text-muted">Référence {{ current.reference }}</p>
+      @if (formError(); as message) {
+        <p role="alert" class="rounded-control bg-danger-soft px-3 py-2 text-sm text-danger-ink">{{ message }}</p>
+      }
+    </div>
+  }
+  @if (step() !== 'form' && step() !== 'password' && (!polling() || timedOut())) {
+    <div modalActions>
+      <app-button type="button" variant="ghost" (click)="close()">Fermer</app-button>
+    </div>
+  }
+</app-modal>
