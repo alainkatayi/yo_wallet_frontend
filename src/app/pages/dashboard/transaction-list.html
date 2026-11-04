@@ -1,0 +1,101 @@
+<app-card
+  title="Dernières transactions"
+  [subtitle]="limit() === null ? 'Les plus récentes d’abord.' : 'Les plus récentes.'"
+>
+  @if (loading()) {
+    <div class="flex justify-center py-6">
+      <app-spinner [size]="22" />
+    </div>
+  } @else if (error(); as message) {
+    <p role="alert" class="rounded-control bg-danger-soft px-3 py-2 text-sm text-danger-ink">{{ message }}</p>
+    <div class="mt-4">
+      <app-button type="button" (click)="reloadList()">Réessayer</app-button>
+    </div>
+  } @else if (items().length === 0) {
+    <p class="text-sm text-muted">Aucune transaction pour le moment.</p>
+  } @else {
+    <ul>
+      @for (item of visible(); track item.reference) {
+        <li class="border-b border-line last:border-b-0">
+          <button
+            type="button"
+            class="flex w-full items-start justify-between gap-3 py-3 text-left"
+            (click)="openDetail(item.reference)"
+          >
+            <span>
+              <span class="block text-sm font-semibold text-ink">{{ typeLabel(item.type) }}</span>
+              <span class="mt-1 block text-xs text-muted">{{ when(item.createdAt) }}</span>
+              <span class="mt-1 block text-xs text-muted">
+                Frais {{ item.fee }} {{ currency() }}
+                @if (item.bankAccount) {
+                  · {{ item.bankAccount }}
+                }
+              </span>
+            </span>
+            <span class="flex flex-col items-end gap-2">
+              <span class="text-sm font-semibold text-ink">{{ item.amount }} {{ currency() }}</span>
+              <app-badge [tone]="statusTone(item.status)">{{ statusLabel(item.status) }}</app-badge>
+            </span>
+          </button>
+        </li>
+      }
+    </ul>
+  }
+  @if (limit() !== null && !loading() && error() === null) {
+    <a routerLink="/activites" class="mt-4 inline-block text-sm font-semibold text-tertiary-ink">
+      Voir toutes les activités
+    </a>
+  }
+</app-card>
+
+<app-modal [open]="detailOpen()" title="Détail de l’opération" (closed)="closeDetail()">
+  @if (detailLoading()) {
+    <div class="flex justify-center py-4">
+      <app-spinner [size]="22" />
+    </div>
+  } @else if (detailError(); as message) {
+    <p role="alert" class="rounded-control bg-danger-soft px-3 py-2 text-sm text-danger-ink">{{ message }}</p>
+  } @else if (detail(); as current) {
+    <dl class="grid gap-3 text-ink">
+      <div>
+        <dt class="text-xs font-medium tracking-wide text-muted uppercase">Type</dt>
+        <dd class="mt-1 text-sm font-semibold">{{ typeLabel(current.type) }}</dd>
+      </div>
+      <div>
+        <dt class="text-xs font-medium tracking-wide text-muted uppercase">Montant</dt>
+        <dd class="mt-1 text-sm font-semibold">{{ current.amount }} {{ currency() }}</dd>
+      </div>
+      <div>
+        <dt class="text-xs font-medium tracking-wide text-muted uppercase">Frais</dt>
+        <dd class="mt-1 text-sm font-semibold">{{ current.fee }} {{ currency() }}</dd>
+      </div>
+      <div>
+        <dt class="text-xs font-medium tracking-wide text-muted uppercase">Statut</dt>
+        <dd class="mt-1"><app-badge [tone]="statusTone(current.status)">{{ statusLabel(current.status) }}</app-badge></dd>
+      </div>
+      @if (current.status === 'FAILED' || current.status === 'REVERSED') {
+        <div>
+          <dt class="text-xs font-medium tracking-wide text-muted uppercase">Motif</dt>
+          <dd class="mt-1 text-sm font-semibold">{{ reason(current.failureReason) }}</dd>
+        </div>
+      }
+      @if (current.bankAccount) {
+        <div>
+          <dt class="text-xs font-medium tracking-wide text-muted uppercase">Compte</dt>
+          <dd class="mt-1 text-sm font-semibold tracking-wide">{{ current.bankAccount }}</dd>
+        </div>
+      }
+      <div>
+        <dt class="text-xs font-medium tracking-wide text-muted uppercase">Date</dt>
+        <dd class="mt-1 text-sm font-semibold">{{ when(current.createdAt) }}</dd>
+      </div>
+      <div>
+        <dt class="text-xs font-medium tracking-wide text-muted uppercase">Référence</dt>
+        <dd class="mt-1 text-sm font-semibold break-all">{{ current.reference }}</dd>
+      </div>
+    </dl>
+  }
+  <div modalActions>
+    <app-button type="button" variant="ghost" (click)="closeDetail()">Fermer</app-button>
+  </div>
+</app-modal>
