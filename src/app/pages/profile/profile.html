@@ -1,8 +1,44 @@
 @if (user(); as current) {
-  <app-page-header title="Profil" subtitle="Mettez à jour votre identité ou changez votre mot de passe." />
+  <app-page-header
+    title="Profil"
+    [subtitle]="editing() ? 'Modifiez votre identité ou votre mot de passe.' : 'Les informations de votre compte.'"
+  />
 
+  @if (!editing()) {
+    <div class="mt-6 max-w-xl">
+      <app-card title="Informations" subtitle="L'adresse e-mail reste celle de l'inscription.">
+        <dl class="grid gap-4 sm:grid-cols-2">
+          <div class="sm:col-span-2">
+            <dt class="text-xs font-medium tracking-wide text-muted uppercase">Nom</dt>
+            <dd class="mt-1 text-sm font-semibold text-ink">{{ name() }}</dd>
+          </div>
+          <div>
+            <dt class="text-xs font-medium tracking-wide text-muted uppercase">E-mail</dt>
+            <dd class="mt-1 text-sm font-semibold break-all text-ink">{{ current.email }}</dd>
+          </div>
+          <div>
+            <dt class="text-xs font-medium tracking-wide text-muted uppercase">Téléphone</dt>
+            <dd class="mt-1 text-sm font-semibold text-ink">{{ current.phone }}</dd>
+          </div>
+          <div>
+            <dt class="text-xs font-medium tracking-wide text-muted uppercase">Statut</dt>
+            <dd class="mt-1">
+              <app-badge [tone]="accountTone()">{{ accountLabel() }}</app-badge>
+            </dd>
+          </div>
+          <div>
+            <dt class="text-xs font-medium tracking-wide text-muted uppercase">Inscrit le</dt>
+            <dd class="mt-1 text-sm font-semibold text-ink">{{ createdAt() }}</dd>
+          </div>
+        </dl>
+        <div class="mt-6 sm:max-w-xs">
+          <app-button type="button" [full]="true" (click)="startEdit()">Modifier</app-button>
+        </div>
+      </app-card>
+    </div>
+  } @else {
   <div class="mt-6 grid gap-4">
-    <app-card title="Informations" subtitle="L'adresse e-mail reste celle de l'inscription.">
+    <app-card title="Modifier les informations" subtitle="L'adresse e-mail reste celle de l'inscription.">
       <form class="flex flex-col gap-4" [formGroup]="profileForm" novalidate (ngSubmit)="saveProfile()">
         <div class="grid gap-4 sm:grid-cols-2">
           <app-form-field label="Prénom" inputId="firstName" [error]="firstNameError()">
@@ -82,9 +118,12 @@
           </p>
         }
 
-        <div class="sm:max-w-xs">
+        <div class="flex flex-col gap-2 sm:max-w-xs">
           <app-button type="submit" [full]="true" [loading]="savingProfile()" [disabled]="savingPassword()">
             Enregistrer
+          </app-button>
+          <app-button type="button" variant="ghost" [full]="true" [disabled]="savingProfile() || savingPassword()" (click)="cancelEdit()">
+            Annuler
           </app-button>
         </div>
       </form>
@@ -192,6 +231,7 @@
       </form>
     </app-card>
   </div>
+  }
 } @else {
   <div class="flex justify-center py-16">
     <app-spinner [size]="28" />

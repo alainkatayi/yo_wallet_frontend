@@ -14,8 +14,12 @@ export type IconName =
   | 'shield'
   | 'bolt'
   | 'wallet'
+  | 'card'
+  | 'activity'
   | 'check'
   | 'alert'
+  | 'arrow-up'
+  | 'arrow-down'
   | 'arrow-right';
 
 @Component({
@@ -88,6 +92,24 @@ export type IconName =
           <rect x="3" y="6" width="18" height="13" rx="2" />
           <path d="M3 10h18" />
           <circle cx="16" cy="14.5" r="0.9" fill="currentColor" stroke="none" />
+        }
+        @case ('card') {
+          <rect x="3" y="5" width="18" height="14" rx="2" />
+          <path d="M3 10h18" />
+          <path d="M7 15h4" />
+        }
+        @case ('activity') {
+          <path d="M4 6h16" />
+          <path d="M4 12h16" />
+          <path d="M4 18h10" />
+        }
+        @case ('arrow-up') {
+          <path d="M12 19V5" />
+          <path d="m6 11 6-6 6 6" />
+        }
+        @case ('arrow-down') {
+          <path d="M12 5v14" />
+          <path d="m6 13 6 6 6-6" />
         }
         @case ('check') {
           <path d="m5 12 5 5 9-10" />

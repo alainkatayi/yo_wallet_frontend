@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/services/auth.service';
 import { fullName, initials } from '../../../core/utils/format';
@@ -8,7 +9,7 @@ import { LayoutService } from '../layout.service';
 @Component({
   selector: 'app-topbar',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Icon],
+  imports: [RouterLink, Icon],
   templateUrl: './topbar.html',
 })
 export class Topbar {

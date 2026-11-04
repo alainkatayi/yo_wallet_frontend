@@ -1,8 +1,9 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
 
+import { Badge } from '../../components/ui/badge/badge';
 import { Button } from '../../components/ui/button/button';
 import { Card } from '../../components/ui/card/card';
 import {
@@ -39,11 +40,12 @@ import {
   personName,
   phoneFormat,
 } from '../../core/utils/validators';
+import { formatDateTime, fullName, statusLabel, statusTone } from '../../core/utils/format';
 
 @Component({
   selector: 'app-profile',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, PageHeader, Card, FormField, Button, Icon, Spinner],
+  imports: [ReactiveFormsModule, PageHeader, Card, Badge, FormField, Button, Icon, Spinner],
   templateUrl: './profile.html',
 })
 export class ProfilePage {
@@ -58,6 +60,7 @@ export class ProfilePage {
   protected readonly controlPadClass = controlPadClass;
   protected readonly controlIconClass = controlIconClass;
   protected readonly controlActionClass = controlActionClass;
+  protected readonly editing = signal(false);
   protected readonly savingProfile = signal(false);
   protected readonly savingPassword = signal(false);
   protected readonly profileSubmitted = signal(false);
@@ -74,6 +77,23 @@ export class ProfilePage {
     firstName: [this.initialUser?.firstName ?? '', personName],
     lastName: [this.initialUser?.lastName ?? '', personName],
     phone: [this.initialUser?.phone ?? '', phoneFormat],
+  });
+
+  protected readonly name = computed(() => {
+    const user = this.user();
+    return user ? fullName(user) : '';
+  });
+  protected readonly createdAt = computed(() => {
+    const user = this.user();
+    return user ? formatDateTime(user.createdAt) : '';
+  });
+  protected readonly accountLabel = computed(() => {
+    const user = this.user();
+    return user ? statusLabel(user.status) : '';
+  });
+  protected readonly accountTone = computed(() => {
+    const user = this.user();
+    return user ? statusTone(user.status) : 'neutral';
   });
 
   protected readonly passwordForm = this.forms.group(
@@ -111,6 +131,35 @@ export class ProfilePage {
       this.passwordErrors,
       this.passwordError,
     );
+  }
+
+  protected startEdit(): void {
+    const user = this.user();
+    if (user) {
+      this.patch(user);
+    }
+    this.profileSubmitted.set(false);
+    this.profileError.set(null);
+    this.profileErrors.set({});
+    this.editing.set(true);
+  }
+
+  protected cancelEdit(): void {
+    if (this.savingProfile() || this.savingPassword()) {
+      return;
+    }
+    const user = this.user();
+    if (user) {
+      this.patch(user);
+    }
+    this.profileSubmitted.set(false);
+    this.passwordSubmitted.set(false);
+    this.profileError.set(null);
+    this.passwordError.set(null);
+    this.profileErrors.set({});
+    this.passwordErrors.set({});
+    this.passwordForm.reset();
+    this.editing.set(false);
   }
 
   protected firstNameError(): string | null {
@@ -197,6 +246,8 @@ export class ProfilePage {
         next: (user) => {
           this.auth.setUser(user);
           this.patch(user);
+          this.editing.set(false);
+          this.profileSubmitted.set(false);
           this.toast.success('Profil mis à jour.');
         },
         error: (error: unknown) => {

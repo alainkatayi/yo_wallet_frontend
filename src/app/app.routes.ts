@@ -29,6 +29,22 @@ export const routes: Routes = [
           import('./pages/dashboard/dashboard').then((module) => module.DashboardPage),
       },
       {
+        path: 'portefeuille',
+        title: 'Wallet · Yo Wallet',
+        loadComponent: () => import('./pages/wallet/wallet').then((module) => module.WalletPage),
+      },
+      {
+        path: 'compte-bancaire',
+        title: 'Compte bancaire · Yo Wallet',
+        loadComponent: () => import('./pages/bank/bank').then((module) => module.BankPage),
+      },
+      {
+        path: 'activites',
+        title: 'Activités · Yo Wallet',
+        loadComponent: () =>
+          import('./pages/activities/activities').then((module) => module.ActivitiesPage),
+      },
+      {
         path: 'profil',
         title: 'Profil · Yo Wallet',
         loadComponent: () => import('./pages/profile/profile').then((module) => module.ProfilePage),

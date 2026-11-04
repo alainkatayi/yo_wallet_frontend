@@ -21,6 +21,9 @@ export class Sidebar {
   protected readonly layout = inject(LayoutService);
   protected readonly items: readonly NavItem[] = [
     { path: '/tableau-de-bord', label: 'Tableau de bord', icon: 'dashboard' },
+    { path: '/portefeuille', label: 'Wallet', icon: 'wallet' },
+    { path: '/compte-bancaire', label: 'Compte bancaire', icon: 'card' },
+    { path: '/activites', label: 'Activités', icon: 'activity' },
     { path: '/profil', label: 'Profil', icon: 'user' },
   ];
 

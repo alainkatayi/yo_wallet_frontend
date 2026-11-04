@@ -52,6 +52,22 @@ export class AuthService {
     });
   }
 
+  /**
+   * Vérifie le mot de passe du compte déjà connecté.
+   * Le jeton reçu est révoqué tout de suite : la session en cours n’est pas remplacée.
+   */
+  confirmPassword(password: string): Observable<void> {
+    const email = this.user()?.email;
+    if (!email) {
+      return throwError(
+        () => new ApiError(401, 'UNAUTHENTICATED', ERROR_MESSAGES.UNAUTHENTICATED, {}),
+      );
+    }
+    return this.http
+      .post<AuthSession>(`${environment.apiBaseUrl}/api/auth/login`, { email, password })
+      .pipe(switchMap((session) => this.discardIssuedSession(session)));
+  }
+
   login(email: string, password: string): Observable<UserResponse> {
     return this.http
       .post<AuthSession>(`${environment.apiBaseUrl}/api/auth/login`, {
@@ -137,6 +153,23 @@ export class AuthService {
   clearLocalSession(): void {
     this.storage.clear();
     this.user.set(null);
+  }
+
+  private discardIssuedSession(session: AuthSession | null): Observable<void> {
+    const refreshToken = session?.refreshToken;
+    if (typeof refreshToken !== 'string' || refreshToken.length === 0) {
+      return of(undefined);
+    }
+    return this.http
+      .post(
+        `${environment.apiBaseUrl}/api/auth/logout`,
+        { refreshToken },
+        { responseType: 'text' },
+      )
+      .pipe(
+        map(() => undefined),
+        catchError(() => of(undefined)),
+      );
   }
 
   private assertSession(session: AuthSession): void {
