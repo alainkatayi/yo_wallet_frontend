@@ -1,0 +1,29 @@
+@if (phase() === 'loading') {
+  <div class="flex justify-center py-16">
+    <app-spinner [size]="28" />
+  </div>
+} @else if (phase() === 'missing') {
+  <app-page-header title="Activités" subtitle="Aucune opération tant que le portefeuille n’existe pas." />
+  <div class="mt-6 max-w-xl">
+    <app-card title="Portefeuille requis" subtitle="Les recharges et les retraits apparaissent ici.">
+      <a routerLink="/tableau-de-bord" class="text-sm font-semibold text-tertiary-ink">Lier un compte</a>
+    </app-card>
+  </div>
+} @else if (phase() === 'unavailable') {
+  <app-page-header title="Activités" subtitle="Les opérations n’ont pas pu être consultées." />
+  <div class="mt-6 max-w-xl">
+    <app-card title="Service indisponible">
+      @if (message(); as text) {
+        <p role="alert" class="rounded-control bg-danger-soft px-3 py-2 text-sm text-danger-ink">{{ text }}</p>
+      }
+      <div class="mt-4">
+        <app-button type="button" (click)="load()">Réessayer</app-button>
+      </div>
+    </app-card>
+  </div>
+} @else if (wallet(); as current) {
+  <app-page-header title="Activités" subtitle="Vos recharges et retraits, les plus récents d’abord." />
+  <div class="mt-6">
+    <app-transaction-list [currency]="current.currency" />
+  </div>
+}
