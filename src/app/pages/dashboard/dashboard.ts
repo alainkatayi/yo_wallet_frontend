@@ -18,6 +18,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
 import { WalletService } from '../../core/services/wallet.service';
 import { TransactionList } from './transaction-list';
+import { WalletOperations } from './wallet-operations';
 import { toApiError } from '../../core/utils/api-error';
 import {
   formatCountdown,
@@ -50,6 +51,7 @@ const FALLBACK_RETRY_SECONDS = 60;
     FormField,
     Button,
     TransactionList,
+    WalletOperations,
   ],
   templateUrl: './dashboard.html',
 })
@@ -74,6 +76,7 @@ export class DashboardPage {
   protected readonly confirmRetry = signal(false);
   protected readonly pendingAccount = signal('');
   protected readonly linkId = signal<string | null>(null);
+  protected readonly activityTick = signal(0);
 
   protected readonly accountForm = this.forms.group({
     accountNumber: ['', [Validators.required, Validators.pattern(/^\d{12}$/)]],
@@ -110,6 +113,16 @@ export class DashboardPage {
       .pipe(takeUntilDestroyed())
       .subscribe(() => this.accountServerError.set(null));
     this.load();
+  }
+
+  protected refreshAfterMovement(): void {
+    this.activityTick.update((value) => value + 1);
+    this.wallets
+      .me()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (wallet) => this.showReady(wallet),
+      });
   }
 
   protected load(): void {

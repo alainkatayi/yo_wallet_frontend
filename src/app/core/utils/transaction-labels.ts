@@ -3,7 +3,7 @@ export function transactionTypeLabel(type: string): string {
     case 'TOPUP':
       return 'Recharge';
     case 'WITHDRAW':
-      return 'Retrait';
+      return 'Vers la banque';
     default:
       return 'Opération';
   }

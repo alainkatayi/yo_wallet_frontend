@@ -52,7 +52,7 @@ export class WalletOperations {
   private readonly pendingByType = new Map<TransactionType, TransactionResponse>();
 
   readonly currency = input('CDF');
-  /** `topup` n’affiche que la recharge. `all` affiche aussi le retrait. */
+  /** `topup` n’affiche que la recharge. `all` affiche aussi l’envoi vers la banque. */
   readonly mode = input<'all' | 'topup'>('all');
   readonly balanceChanged = output<void>();
   readonly activityChanged = output<void>();
@@ -156,10 +156,6 @@ export class WalletOperations {
     this.step.set('form');
   }
 
-  protected operationWord(): string {
-    return this.type() === 'TOPUP' ? 'recharge' : 'retrait';
-  }
-
   protected confirm(): void {
     const type = this.type();
     const amount = this.preparedAmount();
@@ -216,14 +212,14 @@ export class WalletOperations {
   }
 
   protected title(): string {
-    return this.type() === 'TOPUP' ? 'Recharger' : 'Retirer';
+    return this.type() === 'TOPUP' ? 'Recharger' : 'Vers la banque';
   }
 
   protected actionLabel(): string {
     if (this.retryable()) {
       return 'Réessayer';
     }
-    return this.type() === 'TOPUP' ? 'Recharger' : 'Retirer';
+    return this.type() === 'TOPUP' ? 'Recharger' : 'Envoyer vers la banque';
   }
 
   protected typeLabel(): string {
@@ -236,7 +232,7 @@ export class WalletOperations {
       return '';
     }
     if (tx.status === 'SUCCESS') {
-      return this.type() === 'TOPUP' ? 'Recharge effectuée.' : 'Retrait effectué.';
+      return this.type() === 'TOPUP' ? 'Recharge effectuée.' : 'Envoyé vers votre compte bancaire.';
     }
     if (tx.status === 'FAILED' || tx.status === 'REVERSED') {
       return failureReasonLabel(tx.failureReason);
@@ -358,7 +354,7 @@ export class WalletOperations {
     this.balanceChanged.emit();
     this.activityChanged.emit();
     if (tx.status === 'SUCCESS') {
-      this.toast.success(type === 'TOPUP' ? 'Recharge effectuée.' : 'Retrait effectué.');
+      this.toast.success(type === 'TOPUP' ? 'Recharge effectuée.' : 'Envoyé vers votre compte bancaire.');
     }
   }
 

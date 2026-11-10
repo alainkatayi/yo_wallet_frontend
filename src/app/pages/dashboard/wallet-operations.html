@@ -2,7 +2,7 @@
   @if (mode() === 'all') {
     <app-button type="button" variant="outlined" (click)="open('WITHDRAW')">
       <app-icon name="arrow-up" [size]="18" />
-      Retirer
+      Vers la banque
     </app-button>
   }
   <app-button type="button" variant="primary" (click)="open('TOPUP')">
@@ -14,6 +14,11 @@
 <app-modal [open]="modalOpen()" [title]="title()" (closed)="close()">
   @if (step() === 'form') {
     <form class="flex flex-col gap-4 text-ink" [formGroup]="form" novalidate (ngSubmit)="continue()">
+      @if (type() === 'WITHDRAW') {
+        <p class="text-sm text-muted">
+          Le montant quitte le portefeuille et est envoyé sur le compte bancaire lié.
+        </p>
+      }
       <app-form-field
         label="Montant"
         inputId="operationAmount"
@@ -42,7 +47,11 @@
   } @else if (step() === 'password') {
     <form class="flex flex-col gap-4 text-ink" [formGroup]="passwordForm" novalidate (ngSubmit)="confirm()">
       <p>
-        Confirmez cette {{ operationWord() }} de
+        @if (type() === 'TOPUP') {
+          Confirmez cette recharge de
+        } @else {
+          Confirmez cet envoi vers votre compte bancaire de
+        }
         <span class="font-semibold">{{ preparedAmount() }} {{ currency() }}</span>
         avec le mot de passe du compte connecté.
       </p>

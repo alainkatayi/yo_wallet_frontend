@@ -178,8 +178,18 @@
       </app-card>
     </div>
 
+    @if (currentWallet.status === 'ACTIVE') {
+      <div class="mt-6">
+        <app-wallet-operations
+          [currency]="currentWallet.currency"
+          (balanceChanged)="refreshAfterMovement()"
+          (activityChanged)="refreshAfterMovement()"
+        />
+      </div>
+    }
+
     <div class="mt-4">
-      <app-transaction-list [currency]="currentWallet.currency" [limit]="4" />
+      <app-transaction-list [currency]="currentWallet.currency" [limit]="4" [reload]="activityTick()" />
     </div>
   }
 }
