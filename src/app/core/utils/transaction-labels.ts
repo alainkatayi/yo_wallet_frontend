@@ -1,12 +1,18 @@
-export function transactionTypeLabel(type: string): string {
+export function transactionTypeLabel(type: string, direction?: string | null): string {
   switch (type) {
     case 'TOPUP':
       return 'Recharge';
     case 'WITHDRAW':
       return 'Vers la banque';
+    case 'TRANSFER':
+      return direction === 'IN' ? 'Reçu' : 'Envoi';
     default:
       return 'Opération';
   }
+}
+
+export function transferCounterpartyLabel(direction: string | null | undefined): string {
+  return direction === 'IN' ? 'Expéditeur' : 'Destinataire';
 }
 
 export function transactionStatusLabel(status: string): string {

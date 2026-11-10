@@ -23,17 +23,28 @@
             (click)="openDetail(item.reference)"
           >
             <span>
-              <span class="block text-sm font-semibold text-ink">{{ typeLabel(item.type) }}</span>
+              <span class="block text-sm font-semibold text-ink">{{ typeLabel(item.type, item.direction) }}</span>
               <span class="mt-1 block text-xs text-muted">{{ when(item.createdAt) }}</span>
               <span class="mt-1 block text-xs text-muted">
                 Frais {{ item.fee }} {{ currency() }}
-                @if (item.bankAccount) {
+                @if (partyLine(item); as party) {
+                  · {{ party }}
+                } @else if (item.bankAccount) {
                   · {{ item.bankAccount }}
                 }
               </span>
             </span>
             <span class="flex flex-col items-end gap-2">
-              <span class="text-sm font-semibold text-ink">{{ item.amount }} {{ currency() }}</span>
+              <span class="text-sm font-semibold text-ink">
+                @if (item.direction === 'IN') {
+                  +{{ item.amount }}
+                } @else if (item.direction === 'OUT') {
+                  −{{ item.amount }}
+                } @else {
+                  {{ item.amount }}
+                }
+                {{ currency() }}
+              </span>
               <app-badge [tone]="statusTone(item.status)">{{ statusLabel(item.status) }}</app-badge>
             </span>
           </button>
@@ -59,11 +70,20 @@
     <dl class="grid gap-3 text-ink">
       <div>
         <dt class="text-xs font-medium tracking-wide text-muted uppercase">Type</dt>
-        <dd class="mt-1 text-sm font-semibold">{{ typeLabel(current.type) }}</dd>
+        <dd class="mt-1 text-sm font-semibold">{{ typeLabel(current.type, current.direction) }}</dd>
       </div>
       <div>
         <dt class="text-xs font-medium tracking-wide text-muted uppercase">Montant</dt>
-        <dd class="mt-1 text-sm font-semibold">{{ current.amount }} {{ currency() }}</dd>
+        <dd class="mt-1 text-sm font-semibold">
+          @if (current.direction === 'IN') {
+            +{{ current.amount }}
+          } @else if (current.direction === 'OUT') {
+            −{{ current.amount }}
+          } @else {
+            {{ current.amount }}
+          }
+          {{ currency() }}
+        </dd>
       </div>
       <div>
         <dt class="text-xs font-medium tracking-wide text-muted uppercase">Frais</dt>
@@ -79,7 +99,19 @@
           <dd class="mt-1 text-sm font-semibold">{{ reason(current.failureReason) }}</dd>
         </div>
       }
-      @if (current.bankAccount) {
+      @if (current.counterpartyName || current.counterpartyPhone) {
+        <div>
+          <dt class="text-xs font-medium tracking-wide text-muted uppercase">{{ partyLabel(current.direction) }}</dt>
+          <dd class="mt-1 text-sm font-semibold tracking-wide">
+            @if (current.counterpartyName) {
+              {{ current.counterpartyName }}
+            }
+            @if (current.counterpartyPhone) {
+              <span class="block text-muted">{{ current.counterpartyPhone }}</span>
+            }
+          </dd>
+        </div>
+      } @else if (current.bankAccount) {
         <div>
           <dt class="text-xs font-medium tracking-wide text-muted uppercase">Compte</dt>
           <dd class="mt-1 text-sm font-semibold tracking-wide">{{ current.bankAccount }}</dd>

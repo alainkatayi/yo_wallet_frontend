@@ -7,7 +7,10 @@ export const ERROR_MESSAGES = {
   VALIDATION_ERROR: 'Certains champs sont invalides.',
   EMAIL_ALREADY_USED: 'Cette adresse e-mail est déjà utilisée.',
   DUPLICATE_PHONE: 'Ce numéro de téléphone est déjà utilisé.',
-  INVALID_CREDENTIALS: 'E-mail ou mot de passe incorrect.',
+  INVALID_CREDENTIALS: 'Numéro ou mot de passe incorrect.',
+  RECIPIENT_NOT_FOUND: 'Aucun destinataire trouvé pour ce numéro.',
+  SELF_TRANSFER: 'Vous ne pouvez pas vous envoyer de l’argent à vous-même.',
+  RECIPIENT_WALLET_NOT_ACTIVE: 'Le portefeuille du destinataire n’est pas actif.',
   INVALID_REFRESH_TOKEN: 'Votre session a expiré. Veuillez vous reconnecter.',
   USER_SUSPENDED: 'Ce compte est suspendu.',
   WRONG_CURRENT_PASSWORD: 'Le mot de passe actuel est incorrect.',
@@ -37,6 +40,9 @@ const DETAIL_CODES: ReadonlySet<string> = new Set([
   'WALLET_ALREADY_EXISTS',
   'TOO_MANY_REQUESTS',
   'WALLET_NOT_FOUND',
+  'RECIPIENT_NOT_FOUND',
+  'SELF_TRANSFER',
+  'RECIPIENT_WALLET_NOT_ACTIVE',
 ]);
 
 export type ErrorCode = keyof typeof ERROR_MESSAGES;

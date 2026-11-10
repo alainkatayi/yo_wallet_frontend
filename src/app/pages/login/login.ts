@@ -6,13 +6,13 @@ import { finalize } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
 import {
-  EMAIL_MESSAGES,
   PASSWORD_MESSAGES,
+  PHONE_MESSAGES,
   clearFieldOnChange,
   clientError,
   partitionApiError,
 } from '../../core/utils/form-errors';
-import { emailFormat, passwordValidator } from '../../core/utils/validators';
+import { passwordValidator, phoneFormat } from '../../core/utils/validators';
 import { AuthLayout } from '../../components/layout/auth-layout/auth-layout';
 import { Button } from '../../components/ui/button/button';
 import { controlActionClass, controlIconClass } from '../../components/ui/form-field/form-field';
@@ -39,19 +39,19 @@ export class LoginPage {
   protected readonly serverErrors = signal<Readonly<Record<string, string>>>({});
   protected readonly formError = signal<string | null>(null);
   protected readonly form = this.forms.group({
-    email: ['', emailFormat],
+    phone: ['', phoneFormat],
     password: ['', [Validators.required, passwordValidator]],
   });
 
   constructor() {
-    clearFieldOnChange(this.form.controls.email, 'email', this.serverErrors, this.formError);
+    clearFieldOnChange(this.form.controls.phone, 'phone', this.serverErrors, this.formError);
     clearFieldOnChange(this.form.controls.password, 'password', this.serverErrors, this.formError);
   }
 
-  protected emailError(): string | null {
+  protected phoneError(): string | null {
     return (
-      this.serverErrors()['email'] ??
-      clientError(this.form.controls.email, this.submitted(), EMAIL_MESSAGES)
+      this.serverErrors()['phone'] ??
+      clientError(this.form.controls.phone, this.submitted(), PHONE_MESSAGES)
     );
   }
 
@@ -69,10 +69,10 @@ export class LoginPage {
     if (this.form.invalid || this.submitting()) {
       return;
     }
-    const { email, password } = this.form.getRawValue();
+    const { phone, password } = this.form.getRawValue();
     this.submitting.set(true);
     this.auth
-      .login(email, password)
+      .login(phone, password)
       .pipe(finalize(() => this.submitting.set(false)))
       .subscribe({
         next: () => {
@@ -83,7 +83,7 @@ export class LoginPage {
   }
 
   private show(error: unknown): void {
-    const result = partitionApiError(error, ['email', 'password']);
+    const result = partitionApiError(error, ['phone', 'password']);
     this.serverErrors.set(result.fieldErrors);
     this.formError.set(result.globalMessage);
     if (result.globalMessage) {

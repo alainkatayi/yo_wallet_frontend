@@ -10,13 +10,15 @@ import { FormField } from '../../components/ui/form-field/form-field';
 import { Modal } from '../../components/ui/modal/modal';
 import { Spinner } from '../../components/ui/spinner/spinner';
 import { ApiError } from '../../core/models/api-error';
-import { TransactionResponse, TransactionType } from '../../core/models/transaction';
+import { TransactionResponse, TransactionType, TransferPreview } from '../../core/models/transaction';
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
 import { TransactionService } from '../../core/services/transaction.service';
 import { normalizeAmount } from '../../core/utils/amount';
 import { toApiError } from '../../core/utils/api-error';
+import { PHONE_MESSAGES } from '../../core/utils/form-errors';
 import { failureReasonLabel, transactionTypeLabel } from '../../core/utils/transaction-labels';
+import { normalizePhone, phoneFormat } from '../../core/utils/validators';
 
 type Step = 'form' | 'password' | 'pending' | 'result';
 
@@ -29,7 +31,7 @@ const PASSWORD_WRONG = 'Mot de passe incorrect.';
 const KEY_INVALID = 'La clé d’idempotence est absente ou invalide.';
 
 interface HeldKey {
-  readonly amount: string;
+  readonly token: string;
   readonly key: string;
 }
 
@@ -52,7 +54,7 @@ export class WalletOperations {
   private readonly pendingByType = new Map<TransactionType, TransactionResponse>();
 
   readonly currency = input('CDF');
-  /** `topup` n’affiche que la recharge. `all` affiche aussi l’envoi vers la banque. */
+  /** `topup` n’affiche que la recharge. `all` affiche aussi banque et envoi. */
   readonly mode = input<'all' | 'topup'>('all');
   readonly balanceChanged = output<void>();
   readonly activityChanged = output<void>();
@@ -64,6 +66,7 @@ export class WalletOperations {
   protected readonly step = signal<Step>('form');
   protected readonly showPassword = signal(false);
   protected readonly preparedAmount = signal<string | null>(null);
+  protected readonly recipient = signal<TransferPreview | null>(null);
   protected readonly submitting = signal(false);
   protected readonly polling = signal(false);
   protected readonly timedOut = signal(false);
@@ -71,6 +74,7 @@ export class WalletOperations {
   protected readonly formError = signal<string | null>(null);
   protected readonly outcome = signal<TransactionResponse | null>(null);
   protected readonly form = this.forms.group({
+    recipientPhone: [''],
     amount: ['', [Validators.required, amountControl]],
   });
   protected readonly passwordForm = this.forms.group({
@@ -79,7 +83,7 @@ export class WalletOperations {
 
   constructor() {
     this.destroyRef.onDestroy(() => this.stopPolling());
-    this.form.controls.amount.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
+    this.form.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
       this.formError.set(null);
       this.retryable.set(false);
     });
@@ -97,6 +101,8 @@ export class WalletOperations {
     this.formError.set(null);
     this.retryable.set(false);
     this.timedOut.set(false);
+    this.recipient.set(null);
+    this.syncPhoneValidators(type);
     const pending = this.pendingByType.get(type);
     if (pending) {
       this.outcome.set(pending);
@@ -110,6 +116,7 @@ export class WalletOperations {
     this.outcome.set(null);
     this.step.set('form');
     this.resetEntry();
+    this.syncPhoneValidators(type);
     this.modalOpen.set(true);
   }
 
@@ -138,7 +145,30 @@ export class WalletOperations {
       this.form.controls.amount.markAsTouched();
       return;
     }
+    if (this.type() === 'TRANSFER') {
+      const phone = normalizePhone(this.form.controls.recipientPhone.value);
+      this.submitting.set(true);
+      this.transactions
+        .previewTransfer(phone, amount)
+        .pipe(
+          finalize(() => this.submitting.set(false)),
+          takeUntilDestroyed(this.destroyRef),
+        )
+        .subscribe({
+          next: (preview) => {
+            this.preparedAmount.set(preview.amount);
+            this.recipient.set(preview);
+            this.passwordForm.reset();
+            this.showPassword.set(false);
+            this.retryable.set(false);
+            this.step.set('password');
+          },
+          error: (error: unknown) => this.onPreviewError(error),
+        });
+      return;
+    }
     this.preparedAmount.set(amount);
+    this.recipient.set(null);
     this.passwordForm.reset();
     this.showPassword.set(false);
     this.retryable.set(false);
@@ -153,6 +183,7 @@ export class WalletOperations {
     this.showPassword.set(false);
     this.formError.set(null);
     this.retryable.set(false);
+    this.recipient.set(null);
     this.step.set('form');
   }
 
@@ -168,13 +199,21 @@ export class WalletOperations {
       return;
     }
     const password = this.passwordForm.controls.password.value;
-    const key = this.keyFor(type, amount);
+    const phone = this.recipient()?.phone ?? null;
+    if (type === 'TRANSFER' && phone === null) {
+      this.step.set('form');
+      return;
+    }
+    const key = this.keyFor(type, amount, phone);
     this.submitting.set(true);
     this.auth
       .confirmPassword(password)
       .pipe(
         switchMap(() => {
           this.passwordForm.reset();
+          if (type === 'TRANSFER' && phone !== null) {
+            return this.transactions.transfer(phone, amount, key);
+          }
           return this.transactions.submit(type, amount, key);
         }),
         finalize(() => this.submitting.set(false)),
@@ -211,19 +250,52 @@ export class WalletOperations {
     return AMOUNT_INVALID;
   }
 
+  protected phoneError(): string | null {
+    const control = this.form.controls.recipientPhone;
+    if (!control.touched || control.errors === null) {
+      return null;
+    }
+    if (control.hasError('required') || control.value.trim() === '') {
+      return PHONE_MESSAGES['required'] ?? null;
+    }
+    return PHONE_MESSAGES['phone'] ?? null;
+  }
+
   protected title(): string {
-    return this.type() === 'TOPUP' ? 'Recharger' : 'Vers la banque';
+    switch (this.type()) {
+      case 'TOPUP':
+        return 'Recharger';
+      case 'WITHDRAW':
+        return 'Vers la banque';
+      case 'TRANSFER':
+        return 'Envoyer';
+    }
   }
 
   protected actionLabel(): string {
     if (this.retryable()) {
       return 'Réessayer';
     }
-    return this.type() === 'TOPUP' ? 'Recharger' : 'Envoyer vers la banque';
+    switch (this.type()) {
+      case 'TOPUP':
+        return 'Recharger';
+      case 'WITHDRAW':
+        return 'Envoyer vers la banque';
+      case 'TRANSFER':
+        return 'Confirmer l’envoi';
+    }
   }
 
   protected typeLabel(): string {
     return transactionTypeLabel(this.type());
+  }
+
+  protected recipientName(): string {
+    const current = this.recipient();
+    if (current === null) {
+      return '';
+    }
+    return `${current.firstName} ${current.lastName}`.trim();
   }
 
   protected resultText(): string {
@@ -232,7 +304,14 @@ export class WalletOperations {
       return '';
     }
     if (tx.status === 'SUCCESS') {
-      return this.type() === 'TOPUP' ? 'Recharge effectuée.' : 'Envoyé vers votre compte bancaire.';
+      switch (this.type()) {
+        case 'TOPUP':
+          return 'Recharge effectuée.';
+        case 'WITHDRAW':
+          return 'Envoyé vers votre compte bancaire.';
+        case 'TRANSFER':
+          return 'Envoi effectué.';
+      }
     }
     if (tx.status === 'FAILED' || tx.status === 'REVERSED') {
       return failureReasonLabel(tx.failureReason);
@@ -266,6 +345,19 @@ export class WalletOperations {
     this.onSubmitError(error);
   }
 
+  private onPreviewError(error: unknown): void {
+    const api = toApiError(error);
+    if (this.sessionExpired(api)) {
+      return;
+    }
+    if (api.code === 'INVALID_AMOUNT') {
+      this.form.controls.amount.setErrors({ amount: true });
+      this.form.controls.amount.markAsTouched();
+      return;
+    }
+    this.formError.set(api.message);
+  }
+
   private onSubmitError(error: unknown): void {
     const api = toApiError(error);
     if (this.sessionExpired(api)) {
@@ -278,6 +370,7 @@ export class WalletOperations {
     if (api.code === 'INVALID_AMOUNT') {
       this.form.controls.amount.setErrors({ amount: true });
       this.form.controls.amount.markAsTouched();
+      this.step.set('form');
       return;
     }
     this.retryable.set(this.canRetry(api));
@@ -354,17 +447,24 @@ export class WalletOperations {
     this.balanceChanged.emit();
     this.activityChanged.emit();
     if (tx.status === 'SUCCESS') {
-      this.toast.success(type === 'TOPUP' ? 'Recharge effectuée.' : 'Envoyé vers votre compte bancaire.');
+      const message =
+        type === 'TOPUP'
+          ? 'Recharge effectuée.'
+          : type === 'WITHDRAW'
+            ? 'Envoyé vers votre compte bancaire.'
+            : 'Envoi effectué.';
+      this.toast.success(message);
     }
   }
 
-  private keyFor(type: TransactionType, amount: string): string {
+  private keyFor(type: TransactionType, amount: string, phone: string | null): string {
+    const token = type === 'TRANSFER' ? `${amount}|${phone ?? ''}` : amount;
     const held = this.keys.get(type);
-    if (held && held.amount === amount) {
+    if (held && held.token === token) {
       return held.key;
     }
     const key = crypto.randomUUID();
-    this.keys.set(type, { amount, key });
+    this.keys.set(type, { token, key });
     return key;
   }
 
@@ -373,6 +473,18 @@ export class WalletOperations {
     this.passwordForm.reset();
     this.showPassword.set(false);
     this.preparedAmount.set(null);
+    this.recipient.set(null);
+  }
+
+  private syncPhoneValidators(type: TransactionType): void {
+    const control = this.form.controls.recipientPhone;
+    if (type === 'TRANSFER') {
+      control.setValidators([Validators.required, phoneFormat]);
+    } else {
+      control.clearValidators();
+      control.setValue('');
+    }
+    control.updateValueAndValidity({ emitEvent: false });
   }
 
   private stopPolling(): void {

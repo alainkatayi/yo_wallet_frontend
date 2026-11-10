@@ -1,25 +1,25 @@
 <app-auth-layout>
   <div class="mb-6">
     <h1 class="text-2xl font-semibold tracking-tight text-ink">Bon retour</h1>
-    <p class="mt-1 text-sm text-muted">Saisissez vos identifiants pour accéder à votre portefeuille.</p>
+    <p class="mt-1 text-sm text-muted">Connectez-vous avec votre numéro de téléphone.</p>
   </div>
 
   <form class="flex flex-col gap-4" [formGroup]="form" novalidate (ngSubmit)="submit()">
-    <app-form-field label="E-mail" inputId="email" [error]="emailError()">
+    <app-form-field label="Téléphone" inputId="phone" [error]="phoneError()" hint="Format international, ex. +243850842233">
       <div class="relative">
         <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-muted">
-          <app-icon name="mail" [size]="18" />
+          <app-icon name="phone" [size]="18" />
         </span>
         <input
-          id="email"
-          type="email"
-          name="email"
-          autocomplete="username"
-          placeholder="nom@exemple.com"
+          id="phone"
+          type="tel"
+          name="phone"
+          autocomplete="tel"
+          placeholder="+243850842233"
           [class]="controlIconClass"
-          [formControl]="form.controls.email"
-          [attr.aria-invalid]="emailError() ? 'true' : null"
-          [attr.aria-describedby]="emailError() ? 'email-error' : null"
+          [formControl]="form.controls.phone"
+          [attr.aria-invalid]="phoneError() ? 'true' : null"
+          [attr.aria-describedby]="phoneError() ? 'phone-error' : 'phone-hint'"
         />
       </div>
     </app-form-field>
@@ -32,7 +32,7 @@
         <input
           id="password"
           [type]="showPassword() ? 'text' : 'password'"
-          name="password"
+          name="current-password"
           autocomplete="current-password"
           placeholder="Votre mot de passe"
           [class]="controlActionClass"

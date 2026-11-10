@@ -5,7 +5,7 @@
 } @else if (phase() === 'missing') {
   <app-page-header title="Activités" subtitle="Aucune opération tant que le portefeuille n’existe pas." />
   <div class="mt-6 max-w-xl">
-    <app-card title="Portefeuille requis" subtitle="Les recharges et les envois vers la banque apparaissent ici.">
+    <app-card title="Portefeuille requis" subtitle="Les recharges, envois et transferts apparaissent ici.">
       <a routerLink="/tableau-de-bord" class="text-sm font-semibold text-tertiary-ink">Lier un compte</a>
     </app-card>
   </div>
@@ -22,7 +22,7 @@
     </app-card>
   </div>
 } @else if (wallet(); as current) {
-  <app-page-header title="Activités" subtitle="Vos recharges et vos envois vers la banque, les plus récents d’abord." />
+  <app-page-header title="Activités" subtitle="Vos recharges, envois vers la banque et transferts, les plus récents d’abord." />
   <div class="mt-6">
     <app-transaction-list [currency]="current.currency" />
   </div>

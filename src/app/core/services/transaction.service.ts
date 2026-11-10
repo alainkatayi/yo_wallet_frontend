@@ -10,6 +10,7 @@ import {
   TransactionPage,
   TransactionResponse,
   TransactionType,
+  TransferPreview,
 } from '../models/transaction';
 
 @Injectable({ providedIn: 'root' })
@@ -23,6 +24,33 @@ export class TransactionService {
         headers: { 'Idempotency-Key': idempotencyKey },
         observe: 'response',
       })
+      .pipe(
+        map((response) => ({
+          httpStatus: response.status,
+          transaction: readTransaction(response.body),
+        })),
+      );
+  }
+
+  previewTransfer(recipientPhone: string, amount: string): Observable<TransferPreview> {
+    return this.http
+      .post<unknown>(`${environment.transactionBaseUrl}/api/transactions/transfer/preview`, {
+        recipientPhone,
+        amount,
+      })
+      .pipe(map((body) => readPreview(body)));
+  }
+
+  transfer(recipientPhone: string, amount: string, idempotencyKey: string): Observable<SubmittedTransaction> {
+    return this.http
+      .post<unknown>(
+        `${environment.transactionBaseUrl}/api/transactions/transfer`,
+        { recipientPhone, amount },
+        {
+          headers: { 'Idempotency-Key': idempotencyKey },
+          observe: 'response',
+        },
+      )
       .pipe(
         map((response) => ({
           httpStatus: response.status,
@@ -62,6 +90,24 @@ function readPage(value: unknown): TransactionPage {
   };
 }
 
+function readPreview(value: unknown): TransferPreview {
+  const record = asRecord(value);
+  const firstName = record?.['firstName'];
+  const lastName = record?.['lastName'];
+  const phone = record?.['phone'];
+  const amount = record?.['amount'];
+  if (
+    record === null ||
+    typeof firstName !== 'string' ||
+    typeof lastName !== 'string' ||
+    typeof phone !== 'string' ||
+    typeof amount !== 'string'
+  ) {
+    throw new ApiError(0, 'UNKNOWN', GENERIC_MESSAGE, {});
+  }
+  return { firstName, lastName, phone, amount };
+}
+
 function readTransaction(value: unknown): TransactionResponse {
   const record = asRecord(value);
   const reference = record?.['reference'];
@@ -83,14 +129,19 @@ function readTransaction(value: unknown): TransactionResponse {
   ) {
     throw new ApiError(0, 'UNKNOWN', GENERIC_MESSAGE, {});
   }
+  const directionRaw = readNullableString(record['direction']);
+  const direction = directionRaw === 'IN' || directionRaw === 'OUT' ? directionRaw : null;
   return {
     reference,
     type,
+    direction,
     amount,
     fee,
     status,
     failureReason: readNullableString(record['failureReason']),
     bankAccount: readNullableString(record['bankAccount']),
+    counterpartyPhone: readNullableString(record['counterpartyPhone']),
+    counterpartyName: readNullableString(record['counterpartyName']),
     createdAt,
     updatedAt,
   };

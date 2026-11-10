@@ -57,21 +57,21 @@ export class AuthService {
    * Le jeton reçu est révoqué tout de suite : la session en cours n’est pas remplacée.
    */
   confirmPassword(password: string): Observable<void> {
-    const email = this.user()?.email;
-    if (!email) {
+    const phone = this.user()?.phone;
+    if (!phone) {
       return throwError(
         () => new ApiError(401, 'UNAUTHENTICATED', ERROR_MESSAGES.UNAUTHENTICATED, {}),
       );
     }
     return this.http
-      .post<AuthSession>(`${environment.apiBaseUrl}/api/auth/login`, { email, password })
+      .post<AuthSession>(`${environment.apiBaseUrl}/api/auth/login`, { phone, password })
       .pipe(switchMap((session) => this.discardIssuedSession(session)));
   }
 
-  login(email: string, password: string): Observable<UserResponse> {
+  login(phone: string, password: string): Observable<UserResponse> {
     return this.http
       .post<AuthSession>(`${environment.apiBaseUrl}/api/auth/login`, {
-        email: email.trim(),
+        phone: normalizePhone(phone),
         password,
       })
       .pipe(

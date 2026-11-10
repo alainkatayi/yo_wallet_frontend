@@ -17,6 +17,7 @@ import {
   transactionStatusLabel,
   transactionStatusTone,
   transactionTypeLabel,
+  transferCounterpartyLabel,
 } from '../../core/utils/transaction-labels';
 
 @Component({
@@ -104,8 +105,19 @@ export class TransactionList {
     this.detailOpen.set(false);
   }
 
-  protected typeLabel(type: string): string {
-    return transactionTypeLabel(type);
+  protected typeLabel(type: string, direction?: string | null): string {
+    return transactionTypeLabel(type, direction);
+  }
+
+  protected partyLabel(direction: string | null | undefined): string {
+    return transferCounterpartyLabel(direction);
+  }
+
+  protected partyLine(item: TransactionResponse): string | null {
+    if (item.counterpartyName && item.counterpartyPhone) {
+      return `${item.counterpartyName} · ${item.counterpartyPhone}`;
+    }
+    return item.counterpartyName ?? item.counterpartyPhone;
   }
 
   protected statusLabel(status: string): string {

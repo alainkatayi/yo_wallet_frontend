@@ -1,5 +1,9 @@
 <div class="flex flex-wrap items-center justify-center gap-3">
   @if (mode() === 'all') {
+    <app-button type="button" variant="outlined" (click)="open('TRANSFER')">
+      <app-icon name="arrow-up" [size]="18" />
+      Envoyer
+    </app-button>
     <app-button type="button" variant="outlined" (click)="open('WITHDRAW')">
       <app-icon name="arrow-up" [size]="18" />
       Vers la banque
@@ -18,6 +22,30 @@
         <p class="text-sm text-muted">
           Le montant quitte le portefeuille et est envoyé sur le compte bancaire lié.
         </p>
+      }
+      @if (type() === 'TRANSFER') {
+        <p class="text-sm text-muted">
+          Saisissez le numéro du destinataire. Nous vérifierons son identité avant la confirmation.
+        </p>
+        <app-form-field
+          label="Téléphone du destinataire"
+          inputId="recipientPhone"
+          [error]="phoneError()"
+          hint="Format international, ex. +243850842233"
+        >
+          <input
+            id="recipientPhone"
+            type="tel"
+            name="recipientPhone"
+            autocomplete="tel"
+            placeholder="+243850842233"
+            [class]="controlPadClass"
+            [formControl]="form.controls.recipientPhone"
+            [readOnly]="submitting()"
+            [attr.aria-invalid]="phoneError() ? 'true' : null"
+            [attr.aria-describedby]="phoneError() ? 'recipientPhone-error' : 'recipientPhone-hint'"
+          />
+        </app-form-field>
       }
       <app-form-field
         label="Montant"
@@ -42,19 +70,31 @@
       @if (formError(); as message) {
         <p role="alert" class="rounded-control bg-danger-soft px-3 py-2 text-sm text-danger-ink">{{ message }}</p>
       }
-      <app-button type="submit" [full]="true">Continuer</app-button>
+      <app-button type="submit" [full]="true" [loading]="submitting()">Continuer</app-button>
     </form>
   } @else if (step() === 'password') {
     <form class="flex flex-col gap-4 text-ink" [formGroup]="passwordForm" novalidate (ngSubmit)="confirm()">
-      <p>
-        @if (type() === 'TOPUP') {
-          Confirmez cette recharge de
-        } @else {
-          Confirmez cet envoi vers votre compte bancaire de
-        }
-        <span class="font-semibold">{{ preparedAmount() }} {{ currency() }}</span>
-        avec le mot de passe du compte connecté.
-      </p>
+      @if (type() === 'TRANSFER' && recipient(); as current) {
+        <div class="rounded-control border border-line bg-neutral px-3 py-3 text-sm">
+          <p class="font-semibold text-ink">{{ recipientName() }}</p>
+          <p class="mt-1 text-muted">{{ current.phone }}</p>
+          <p class="mt-2 text-ink">
+            Montant
+            <span class="font-semibold">{{ preparedAmount() }} {{ currency() }}</span>
+          </p>
+        </div>
+        <p>Confirmez cet envoi avec le mot de passe du compte connecté.</p>
+      } @else {
+        <p>
+          @if (type() === 'TOPUP') {
+            Confirmez cette recharge de
+          } @else {
+            Confirmez cet envoi vers votre compte bancaire de
+          }
+          <span class="font-semibold">{{ preparedAmount() }} {{ currency() }}</span>
+          avec le mot de passe du compte connecté.
+        </p>
+      }
       <app-form-field
         label="Mot de passe"
         inputId="operationPassword"
@@ -91,7 +131,7 @@
       }
       <app-button type="submit" [full]="true" [loading]="submitting()">{{ actionLabel() }}</app-button>
       <app-button type="button" variant="ghost" [full]="true" [disabled]="submitting()" (click)="backToAmount()">
-        Modifier le montant
+        Modifier
       </app-button>
     </form>
   } @else if (step() === 'pending') {
@@ -116,7 +156,9 @@
       <p class="font-semibold">{{ resultText() }}</p>
       <p>{{ typeLabel() }} de {{ current.amount }} {{ currency() }}.</p>
       <p class="text-muted">Frais {{ current.fee }}</p>
-      @if (current.bankAccount) {
+      @if (current.counterpartyPhone) {
+        <p class="text-muted">{{ current.counterpartyPhone }}</p>
+      } @else if (current.bankAccount) {
         <p class="text-muted">{{ current.bankAccount }}</p>
       }
       <p class="text-muted">Référence {{ current.reference }}</p>
