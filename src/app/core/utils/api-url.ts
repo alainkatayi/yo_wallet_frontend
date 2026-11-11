@@ -8,14 +8,7 @@ const PUBLIC_AUTH_PATHS = [
 ] as const;
 
 export function isApiRequest(url: string): boolean {
-  return (
-    matchesBase(url, environment.apiBaseUrl) ||
-    matchesBase(url, environment.walletBaseUrl) ||
-    matchesBase(url, environment.transactionBaseUrl)
-  );
-}
-
-function matchesBase(url: string, base: string): boolean {
+  const base = environment.apiBaseUrl;
   return url === base || url.startsWith(`${base}/`);
 }
 

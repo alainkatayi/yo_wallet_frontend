@@ -18,20 +18,20 @@ export class WalletService {
 
   me(): Observable<WalletResponse> {
     return this.http
-      .get<unknown>(`${environment.walletBaseUrl}/api/wallets/me`)
+      .get<unknown>(`${environment.apiBaseUrl}/api/wallets/me`)
       .pipe(map((body) => readWallet(body)));
   }
 
   initiate(accountNumber: string): Observable<InitiateLinkResponse> {
     return this.http
-      .post<unknown>(`${environment.walletBaseUrl}/api/wallets/link/initiate`, { accountNumber })
+      .post<unknown>(`${environment.apiBaseUrl}/api/wallets/link/initiate`, { accountNumber })
       .pipe(map((body) => readInitiation(body)));
   }
 
   confirm(linkId: string, code: string): Observable<ConfirmedWallet> {
     return this.http
       .post<unknown>(
-        `${environment.walletBaseUrl}/api/wallets/link/confirm`,
+        `${environment.apiBaseUrl}/api/wallets/link/confirm`,
         { linkId, code },
         { observe: 'response' },
       )

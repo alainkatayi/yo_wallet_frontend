@@ -20,7 +20,7 @@ export class TransactionService {
   submit(type: TransactionType, amount: string, idempotencyKey: string): Observable<SubmittedTransaction> {
     const path = type === 'TOPUP' ? 'topup' : 'withdraw';
     return this.http
-      .post<unknown>(`${environment.transactionBaseUrl}/api/transactions/${path}`, { amount }, {
+      .post<unknown>(`${environment.apiBaseUrl}/api/transactions/${path}`, { amount }, {
         headers: { 'Idempotency-Key': idempotencyKey },
         observe: 'response',
       })
@@ -34,7 +34,7 @@ export class TransactionService {
 
   previewTransfer(recipientPhone: string, amount: string): Observable<TransferPreview> {
     return this.http
-      .post<unknown>(`${environment.transactionBaseUrl}/api/transactions/transfer/preview`, {
+      .post<unknown>(`${environment.apiBaseUrl}/api/transactions/transfer/preview`, {
         recipientPhone,
         amount,
       })
@@ -44,7 +44,7 @@ export class TransactionService {
   transfer(recipientPhone: string, amount: string, idempotencyKey: string): Observable<SubmittedTransaction> {
     return this.http
       .post<unknown>(
-        `${environment.transactionBaseUrl}/api/transactions/transfer`,
+        `${environment.apiBaseUrl}/api/transactions/transfer`,
         { recipientPhone, amount },
         {
           headers: { 'Idempotency-Key': idempotencyKey },
@@ -61,7 +61,7 @@ export class TransactionService {
 
   list(): Observable<TransactionPage> {
     return this.http
-      .get<unknown>(`${environment.transactionBaseUrl}/api/transactions`, {
+      .get<unknown>(`${environment.apiBaseUrl}/api/transactions`, {
         params: { page: '0', size: '20' },
       })
       .pipe(map((body) => readPage(body)));
@@ -70,7 +70,7 @@ export class TransactionService {
   one(reference: string): Observable<TransactionResponse> {
     return this.http
       .get<unknown>(
-        `${environment.transactionBaseUrl}/api/transactions/${encodeURIComponent(reference)}`,
+        `${environment.apiBaseUrl}/api/transactions/${encodeURIComponent(reference)}`,
       )
       .pipe(map((body) => readTransaction(body)));
   }
